@@ -5,10 +5,6 @@ const Service = mongoose.model('Service',{
         type : String,
         required : true
     },
-    email: {
-        type : String,
-        required : true
-    },
     phone: {
         type : Number
     },
@@ -22,6 +18,12 @@ const Service = mongoose.model('Service',{
         type:String
     },
     productQty:{
+        type:String
+    },
+    id:{
+        type:String
+    },
+    receiver:{
         type:String
     }
 });

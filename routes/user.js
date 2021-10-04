@@ -120,27 +120,28 @@ router.put("/user/update/:id",function(req,res){
                 })
 });
 
-router.put("/user/update/password",function(req,res){
-const email = req.body.email;
-const token = jwt.sign({ email: email }, userconfig.secret); 
-User.findOneAndUpdate({_id:id},{ConfirmationCode:token})
-    .then(function(data){
-        nodemailer.sendForgetPasswordConfirmation(data.firstname,email,token);
+router.put("/user/update/password/:id",function(req,res){
+    const id = req.params.id;
+    const {oldpassword,newpassword} = req.body;
+    User.findOne({_id:id}).then(function(data){
+        bcrypt.compare(oldpassword,data.password, function(err,result){
+            if(result === false){
+                return res.status(403).json({message : "Password Didnt Matched",success:false})
+            }else{
+                bcrypt.hash(newpassword,10,function(err,hash){
+                    User.updateOne({ _id:id},
+                        {password : hash}).then(function(result){
+                        res.status(200).json({message:"Password Updated Successfully", success:true})
+                    }).catch(function(err){
+                        res.status(500).json({message:"Password Update Failed",success:false})
+                    })
+                })
+            }
+        })
     }).catch(function(err){
         res.status(500).json({message:"Password Update Failed", success:false})
     })
 });
-
-router.put("/update/password/:token",function(req,res){
-    const token = req.params.token
-    const password = req.body.password;
-    User.findOneAndUpdate({ConfirmationCode:token},{password:password})
-        .then(function(data){
-            res.status(200).json("updated")
-        }).catch(function(err){
-            res.status(500).json({message:"Password Update Failed", success:false})
-        })
-    });
 
 router.delete("/user/delete/:id",function(req,res){
 const id = req.params.id;

@@ -4,27 +4,29 @@ const router = express.Router();
 
 router.post("/add/delivery",function(req,res){
     const username = req.body.Username;
-    const email = req.body.email;
     const phone = req.body.phone;
+    const receiver = req.body.receiver;
     const pickupaddress = req.body.pickupaddress;
     const deliveryaddress = req.body.deliveryaddress;
     const product = req.body.product;
     const productQty = req.body.productQty;
+    const id = req.body.id;
     const service = new Service({
         username:username,
-        email:email,
         phone:phone,
+        receiver:receiver,
         pickupaddress:pickupaddress,
         deliveryaddress:deliveryaddress,
         product:product,
-        productQty:productQty
+        productQty:productQty,
+        id:id
     });
     service.save()
     .then(function(result){
         res.status(201).json({message : "Ordered delivered successfully",success:true})
     })
     .catch(function(err){
-        res.status(500).json({message : err,success:false})
+        res.status(300).json({message : err,success:false})
     });
 });
 
