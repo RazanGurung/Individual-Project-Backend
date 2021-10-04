@@ -3,15 +3,15 @@ const Service = require('../models/service');
 const router = express.Router();
 
 router.post("/add/delivery",function(req,res){
-    const Username = req.body.Username;
+    const username = req.body.Username;
     const email = req.body.email;
     const phone = req.body.phone;
     const pickupaddress = req.body.pickupaddress;
     const deliveryaddress = req.body.deliveryaddress;
-    const product = product;
-    const productQty = productQty;
+    const product = req.body.product;
+    const productQty = req.body.productQty;
     const service = new Service({
-        Username:Username,
+        username:username,
         email:email,
         phone:phone,
         pickupaddress:pickupaddress,
@@ -43,6 +43,23 @@ router.put("/update/delivery/:id",function(req,res){
         res.status(200).json("Update successful completed")
     }).catch(err=>{
         res.status(500).json("Error updating")
+    })
+})
+
+router.get("/get/delivery/:id", function(req,res){
+    const id = req.params.id;
+    Service.findOne({_id:id}).then(data=>{
+        res.status(200).json(data)
+    }).catch(err=>{
+        res.status(500).json("Error populating")
+    })
+})
+
+router.get("/get/all/delivery", function(req,res){
+    Service.find().then(data=>{
+        res.status(200).json(data)
+    }).catch(err=>{
+        res.status(500).json("Error populating")
     })
 })
 

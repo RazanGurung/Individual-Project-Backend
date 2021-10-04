@@ -3,15 +3,15 @@ const { stringify } = require('querystring');
 const User = mongoose.model('User',{
     firstname: {
         type : String,
-        reduired : true
+        required : true
     },
     lastname: {
         type : String,
-        reduired : true
+        required : true
     },
     email: {
         type : String,
-        reduired : true,
+        required : true,
         unique: true
     },
     phone: {
@@ -22,7 +22,7 @@ const User = mongoose.model('User',{
     },
     password:{
         type : String,
-        reduired : true
+        required : true
     },
     ConfirmationCode: {
         type: String,

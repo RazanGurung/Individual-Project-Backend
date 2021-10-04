@@ -1,14 +1,13 @@
 const mongoose = require('mongoose');
 const { stringify } = require('querystring');
 const Service = mongoose.model('Service',{
-    Username: {
+    username: {
         type : String,
-        reduired : true
+        required : true
     },
     email: {
         type : String,
-        reduired : true,
-        unique: true
+        required : true
     },
     phone: {
         type : Number
