@@ -24,9 +24,13 @@ const User = mongoose.model('User',{
         type : String,
         reduired : true
     },
-    profile : {
-        type : String,
-        default : "noImage.jpg"
+    ConfirmationCode: {
+        type: String,
+        unique: true,
+    },
+    verified:{
+        type:String,
+        default:false
     }
 });
 module.exports = User;

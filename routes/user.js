@@ -1,10 +1,11 @@
 const express = require('express');
-const fs = require("fs");
 const User = require('../models/user');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const {check, validationResult} = require('express-validator');
 const router = express.Router();
+const userconfig = require("../config/user.config");
+const nodemailer = require("../config/nodemailer.config");
 
 router.post("/user/register",[
     check("email","Invalid Email Address").isEmail().notEmpty(),
@@ -15,30 +16,35 @@ router.post("/user/register",[
             
            res.status(400).json(errors.array())
         }else{
+            const token = jwt.sign({ email: req.body.email }, userconfig.secret);
             const firstname = req.body.firstname;
             const lastname = req.body.lastname;
             const email = req.body.email;
             const phone = req.body.phone;
             const address = req.body.address;
+            const ConfirmationCode = token;
             const password = req.body.password;
-            bcrypt.hash(password,10,function(err,hash){
-                const user = new User({
-                    firstname:firstname,
-                    lastname:lastname,
-                    email:email,
-                    phone:phone,
-                    address:address,
-                    password:hash
-                });
-                user.save()
-                .then(function(result){
-                    res.status(201).json({message : "User Registration Successful",success:true})
+            bcrypt.genSalt(10, (err,salt)=>{
+                bcrypt.hash(password,salt,function(err,hash){
+                    const user = new User({
+                        firstname:firstname,
+                        lastname:lastname,
+                        email:email,
+                        phone:phone,
+                        address:address,
+                        ConfirmationCode:ConfirmationCode,
+                        password:hash
+                    });
+                    user.save()
+                    .then(function(result){
+                        res.status(201).json({message : "User Registration Successful",success:true})
+                        nodemailer.sendConfirmationEmail(firstname,email,ConfirmationCode);
+                    })
+                    .catch(function(err){
+                        res.status(500).json({message : err,success:false})
+                    });
                 })
-                .catch(function(err){
-                    res.status(500).json({message : err,success:false})
-                });
-            })
-            
+            });
         }
 });
 
@@ -48,6 +54,9 @@ router.post("/user/login",function (req,res){
     .then(function (data) {
         if(data == null){
            return res.status(400).json({message : "Invalid email or Password",success:false})
+        }
+        if(data.verified == "false"){
+            return res.status(400).json({message : "Unverified Account",success:false})
         }
         bcrypt.compare(password,data.password, function(err,result){
             if(result === false){
@@ -63,17 +72,27 @@ router.post("/user/login",function (req,res){
     })
 });
 
+router.put("/user/confirm/:token",function(req,res){
+    const token = req.params.token;
+    const verify = true
+    User.updateOne({ConfirmationCode:token},{
+        verified:verify
+    }).then(data=>{
+        res.status(200).json("verfication completed")
+    }).catch(err=>{
+        res.status(500).json("Error verifying completed")
+    })
+})
+
 router.put("/user/update/:id",function(req,res){
     const id = req.params.id;
     const firstname = req.body.firstname;
-    const middlename = req.body.middlename;
     const lastname = req.body.lastname;
     const phone = req.body.phone;
     const address = req.body.address;
 
     User.updateOne({_id:id},
         {   firstname:firstname,
-            middlename:middlename,
             lastname:lastname,
             phone:phone,
             address:address
@@ -106,31 +125,6 @@ User.findOne({_id:id}).then(function(data){
     res.status(500).json({message:"Password Update Failed", success:false})
 })
 });
-
-router.put("/user/update/profile/:id",function(req,res){
-// if(req.file == undefined){
-//     return res.status(400).json({message : "invalid file", success:false})
-// }
-const id = req.params.id;
-User.findOne({_id:id}).then(function(data){
-    var image = data.profile
-    if(image != "noImage.jpg"){
-        fs.unlinkSync(image, (err) => { 
-            if(err){
-                res.status(400).json({message : "error deleting file", success:false})
-                return
-            }
-        })
-    }
-}) .catch(function(err){
-    res.status(400).json({message : "file not found", success:false})
-})
-User.updateOne({_id:id},{profile : req.file.path}).then(function(result){
-    res.status(200).json({message:"Profile update successfully",success:true})
-}).catch(function(err){
-    res.status(500).json({message:"Failed to Update Profile Picture", success : false})
-})
-})
 
 router.delete("/user/delete/:id",function(req,res){
 const id = req.params.id;
